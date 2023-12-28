@@ -12,6 +12,7 @@ Viewer3D::Viewer3D(rclcpp::Node * node) : node_(node)
   camera_.projection = CAMERA_PERSPECTIVE;         // Camera mode type
 
   topic_plugins_.push_back(createPlugin<PointCloudPlugin>());
+  topic_plugins_.push_back(createPlugin<ObjectsPlugin>());
 }
 
 Viewer3D::~Viewer3D()
@@ -27,6 +28,10 @@ void Viewer3D::visualize()
 {
   ClearBackground(RAYWHITE);
 
+  for (const auto & topic_plugin : topic_plugins_) {
+    topic_plugin->preprocess();
+  }
+
   BeginMode3D(camera_);
 
   for (const auto & topic_plugin : topic_plugins_) {
@@ -36,6 +41,7 @@ void Viewer3D::visualize()
   DrawGrid(10, 1.0f);
 
   EndMode3D();
+  DrawFPS(10, 10);
 }
 
 template <typename T>

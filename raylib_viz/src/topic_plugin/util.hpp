@@ -1,5 +1,7 @@
 #pragma once
 
+#include "raylib.h"
+
 #include <algorithm>
 #include <chrono>
 #include <deque>
@@ -7,6 +9,12 @@
 #include <mutex>
 #include <optional>
 #include <string>
+
+template <typename T>
+static inline T convertFromROS(const float & x, const float & y, const float & z)
+{
+  return T{-x, z, -y};
+}
 
 /**
  * @brief The MessageTraits struct is used to specialize timestamp and frame retrieval for different
