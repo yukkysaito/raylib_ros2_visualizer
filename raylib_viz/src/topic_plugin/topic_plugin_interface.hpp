@@ -13,7 +13,8 @@ protected:
 public:
   TopicPluginInterface(rclcpp::Node * node) : node_(node) {}
   virtual ~TopicPluginInterface() {}
-  virtual void visualize() = 0;
+  virtual void visualize3D() = 0;
   virtual void init(){};
   virtual void preprocess(){};
+  virtual void visualizeOverlay2D(){};
 };

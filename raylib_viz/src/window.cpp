@@ -24,8 +24,6 @@ void Window::run(std::function<bool()> continueLoop)
   {
     rclcpp::spin_some(node_->get_node_base_interface());
 
-    BeginDrawing();
     viewer3d.visualize();
-    EndDrawing();
   }
 }

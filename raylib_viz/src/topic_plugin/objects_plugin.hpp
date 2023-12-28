@@ -30,7 +30,7 @@ public:
     buffer_.addData(msg);
   }
 
-  void visualize() override
+  void visualize3D() override
   {
     const auto message = buffer_.getDataByTimestamp(
       std::chrono::system_clock::time_point(std::chrono::seconds(0)), false);
