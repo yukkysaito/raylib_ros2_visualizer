@@ -1,18 +1,12 @@
 #include "viewer3d.hpp"
 
+#include "raymath.h"
 #include "topic_plugin/topic_plugin.hpp"
 
 #include <iostream>
-Viewer3D::Viewer3D(rclcpp::Node * node) : node_(node)
+Viewer3D::Viewer3D(rclcpp::Node * node)
+: node_(node), frame_tree_(std::make_shared<FrameTree>(node)), camera_player_(frame_tree_)
 {
-  camera_.position = Vector3{0.0f, 5.0f, -10.0f};  // Camera position
-  camera_.target = Vector3{0.0f, 0.0f, 0.0f};      // Camera looking at point
-  camera_.up = Vector3{0.0f, 1.0f, 0.0f};          // Camera up vector (rotation towards target)
-  camera_.fovy = 45.0f;                            // Camera field-of-view Y
-  camera_.projection = CAMERA_PERSPECTIVE;         // Camera mode type
-
-  setViewerFrame("base_link");
-
   topic_plugins_.push_back(createPlugin<PointCloudPlugin>());
   topic_plugins_.push_back(createPlugin<ObjectsPlugin>());
 }
@@ -21,33 +15,31 @@ Viewer3D::~Viewer3D()
 {
 }
 
-void Viewer3D::setViewerFrame(std::string viewer_frame)
-{
-  viewer_frame_ = viewer_frame;
-}
-
 void Viewer3D::visualize()
 {
-  ClearBackground(RAYWHITE);
+  camera_player_.updateCamera();
 
   for (const auto & topic_plugin : topic_plugins_) {
     topic_plugin->preprocess();
   }
 
   BeginDrawing();
-  BeginMode3D(camera_);
+  ClearBackground(RAYWHITE);
+
+  BeginMode3D(camera_player_.getCamera());
 
   for (const auto & topic_plugin : topic_plugins_) {
     topic_plugin->visualize3D();
   }
 
-  DrawGrid(100, 1.0f);
+  DrawGrid(10, 10.0f);
   EndMode3D();
 
   for (const auto & topic_plugin : topic_plugins_) {
     topic_plugin->visualizeOverlay2D();
   }
 
+  // camera_player_.drawCameraInfo();
   DrawFPS(10, 10);
   EndDrawing();
 }
@@ -55,7 +47,7 @@ void Viewer3D::visualize()
 template <typename T>
 std::unique_ptr<T> Viewer3D::createPlugin()
 {
-  auto plugin = std::make_unique<T>(node_);
+  auto plugin = std::make_unique<T>(node_, frame_tree_);
   plugin->init();
   return plugin;
 }

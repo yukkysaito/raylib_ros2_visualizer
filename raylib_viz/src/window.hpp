@@ -9,7 +9,7 @@ class Window
 private:
   int window_width_ = 800;
   int window_height_ = 450;
-  int fps_ = 300;
+  int fps_ = 30;
   rclcpp::Node * node_;
 
 public:

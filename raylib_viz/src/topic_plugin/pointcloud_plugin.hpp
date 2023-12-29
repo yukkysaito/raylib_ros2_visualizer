@@ -15,12 +15,15 @@
 class PointCloudPlugin : public TopicPluginInterface
 {
 public:
-  PointCloudPlugin(rclcpp::Node * node) : TopicPluginInterface(node) {}
+  PointCloudPlugin(rclcpp::Node * node, const std::shared_ptr<FrameTree> frame_tree)
+  : TopicPluginInterface(node, frame_tree)
+  {
+  }
 
   void init() override
   {
     subscription_ = node_->create_subscription<sensor_msgs::msg::PointCloud2>(
-      "/sensing/lidar/top/pointcloud", rclcpp::SensorDataQoS().keep_last(1),
+      "/perception/obstacle_segmentation/pointcloud", rclcpp::SensorDataQoS().keep_last(1),
       std::bind(&PointCloudPlugin::onPointCloud, this, std::placeholders::_1));
     offscreen_texture_ = LoadRenderTexture(800, 450);
   }
@@ -88,11 +91,11 @@ public:
       //     DrawPoint3D(Vector3{(*iter_y), -(*iter_z), (*iter_x)}, RED);
       //   }
       rlBegin(RL_LINES);
-      rlColor4ub(/*r*/ 255, /*g*/ 0, /*b*/ 0, /*a*/ 125);
+      rlColor4ub(/*r*/ 255, /*g*/ 0, /*b*/ 0, /*a*/ 255);
 
       for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
-        rlVertex3f((*iter_y), -(*iter_z), (*iter_x));
-        rlVertex3f((*iter_y), -(*iter_z + 0.01f), (*iter_x));
+        rlVertex3f((*iter_y), (*iter_z), (*iter_x));
+        rlVertex3f((*iter_y), (*iter_z + 0.05f), (*iter_x));
       }
       rlEnd();
       prev_timestamp_ = message->timestamp;

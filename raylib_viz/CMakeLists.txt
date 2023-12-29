@@ -6,17 +6,21 @@ autoware_package()
 
 # find dependencies
 find_package(raylib REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 include_directories(
   include
   SYSTEM
   ${raylib_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
 )
 
 ament_auto_add_library(raylib_viz SHARED
   src/node.cpp
   src/window.cpp
   src/viewer3d.cpp
+  src/camera_player.cpp
+  src/frame_tree.cpp
 )
 
 target_link_libraries(raylib_viz

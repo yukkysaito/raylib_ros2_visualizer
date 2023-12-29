@@ -14,7 +14,10 @@
 class ObjectsPlugin : public TopicPluginInterface
 {
 public:
-  ObjectsPlugin(rclcpp::Node * node) : TopicPluginInterface(node) {}
+  ObjectsPlugin(rclcpp::Node * node, const std::shared_ptr<FrameTree> frame_tree)
+  : TopicPluginInterface(node, frame_tree)
+  {
+  }
 
   void init() override
   {
