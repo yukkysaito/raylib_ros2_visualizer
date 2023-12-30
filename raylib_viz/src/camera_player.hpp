@@ -43,5 +43,6 @@ public:
   void updateCamera();
   void drawCameraInfo();
   void setViewerFrame(const std::string & viewer_frame);
+  std::string getViewerFrame();
   Camera3D getCamera() const { return camera_info_.camera; }
 };

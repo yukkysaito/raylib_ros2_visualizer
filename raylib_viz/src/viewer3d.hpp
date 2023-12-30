@@ -19,9 +19,12 @@ private:
   std::vector<std::unique_ptr<TopicPluginInterface>> topic_plugins_;
   template <typename T>
   std::unique_ptr<T> createPlugin();
+  std::string base_frame_ = "map";
 
 public:
   Viewer3D(rclcpp::Node * node);
   ~Viewer3D();
   void visualize();
+  void setBaseFrame(const std::string & base_frame);
+  std::string getBaseFrame();
 };

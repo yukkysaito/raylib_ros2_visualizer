@@ -6,16 +6,20 @@
 
 #include <chrono>
 #include <memory>
+#include <string>
 
 class TopicPluginInterface
 {
 protected:
   rclcpp::Node * node_;
   std::shared_ptr<FrameTree> frame_tree_;
+  std::string base_frame_;
 
 public:
-  TopicPluginInterface(rclcpp::Node * node, const std::shared_ptr<FrameTree> frame_tree)
-  : node_(node), frame_tree_(frame_tree)
+  TopicPluginInterface(
+    rclcpp::Node * node, const std::shared_ptr<FrameTree> frame_tree,
+    const std::string & base_frame)
+  : node_(node), frame_tree_(frame_tree), base_frame_(base_frame)
   {
   }
   virtual ~TopicPluginInterface() {}

@@ -7,12 +7,14 @@ autoware_package()
 # find dependencies
 find_package(raylib REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(OpenGL REQUIRED)
 
 include_directories(
   include
   SYSTEM
   ${raylib_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
+  ${OPENGL_INCLUDE_DIR}
 )
 
 ament_auto_add_library(raylib_viz SHARED
@@ -25,6 +27,7 @@ ament_auto_add_library(raylib_viz SHARED
 
 target_link_libraries(raylib_viz
   ${raylib_LIBRARIES}
+  ${OPENGL_LIBRARIES}
 )
 
 rclcpp_components_register_node(raylib_viz

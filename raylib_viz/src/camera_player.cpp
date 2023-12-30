@@ -23,6 +23,11 @@ void CameraPlayer::setViewerFrame(const std::string & viewer_frame)
   camera_info_.viewer_frame = viewer_frame;
 }
 
+std::string CameraPlayer::getViewerFrame()
+{
+  return camera_info_.viewer_frame;
+}
+
 void CameraPlayer::updateCamera()
 {
   auto & camera_mode = camera_info_.camera_mode;
@@ -97,6 +102,30 @@ void CameraPlayer::updateCamera()
   current_movement_.y += movement_delta.y;
   current_zoom_ += zoom_delta;
 
+// TODO : refactor
+#if 0
+  auto transform = frame_tree_->getTransform(
+    "map", "base_link", std::chrono::system_clock::now(), std::chrono::duration<double>(0.0));
+  if (transform) {
+    // 変換行列から位置を抽出
+    Eigen::Vector3d position = transform->block<3, 1>(0, 3);
+
+    // 変換行列から姿勢（クォータニオン）を抽出
+    Eigen::Quaterniond quaternion(transform->block<3, 3>(0, 0));
+
+    // RaylibのVector3に変換してカメラの位置を更新
+    camera.position = Vector3{
+      static_cast<float>(position.x()) + camera.position.x,
+      static_cast<float>(position.y()) + camera.position.y,
+      static_cast<float>(position.z()) + camera.position.z};
+
+    // クォータニオンからオイラー角に変換してカメラの回転を更新
+    Eigen::Vector3d euler_angles = quaternion.toRotationMatrix().eulerAngles(2, 1, 0);  // ZYX順
+    camera.target = Vector3{
+      static_cast<float>(euler_angles.x()), static_cast<float>(euler_angles.y()),
+      static_cast<float>(euler_angles.z())};
+  }
+#endif
   // Update the camera
   UpdateCameraPro(&camera, movement_delta, rotation_delta, zoom_delta);
 }

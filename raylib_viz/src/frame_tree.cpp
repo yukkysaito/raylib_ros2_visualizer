@@ -22,12 +22,18 @@ std::optional<Eigen::Matrix4d> FrameTree::getTransform(
     auto tf_time =
       tf2::timeFromSec(std::chrono::duration<double>(time_point.time_since_epoch()).count());
     auto timeout_duration = tf2::durationFromSec(timeout.count());
-    auto transformStamped =
-      tf_buffer_.lookupTransform(to_frame, from_frame, tf_time, timeout_duration);
+    geometry_msgs::msg::TransformStamped transformStamped;
+
+    transformStamped = tf_buffer_.lookupTransform(to_frame, from_frame, tf_time, timeout_duration);
 
     return tf2::transformToEigen(transformStamped.transform).matrix();
+  } catch (const tf2::ExtrapolationException &) {
+    geometry_msgs::msg::TransformStamped transformStamped =
+      tf_buffer_.lookupTransform(to_frame, from_frame, tf2::TimePointZero);
+    return tf2::transformToEigen(transformStamped.transform).matrix();
+
   } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("TransformListener"), ex.what());
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("FrameTree"), ex.what());
     return std::nullopt;
   }
 }

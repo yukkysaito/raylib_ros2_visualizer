@@ -14,8 +14,10 @@
 class ObjectsPlugin : public TopicPluginInterface
 {
 public:
-  ObjectsPlugin(rclcpp::Node * node, const std::shared_ptr<FrameTree> frame_tree)
-  : TopicPluginInterface(node, frame_tree)
+  ObjectsPlugin(
+    rclcpp::Node * node, const std::shared_ptr<FrameTree> frame_tree,
+    const std::string & base_frame)
+  : TopicPluginInterface(node, frame_tree, base_frame)
   {
   }
 
