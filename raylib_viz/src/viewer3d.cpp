@@ -32,7 +32,7 @@ void Viewer3D::visualize()
     topic_plugin->visualize3D();
   }
 
-  DrawGrid(10, 10.0f);
+  DrawGrid(100, 1.0f);
   EndMode3D();
 
   for (const auto & topic_plugin : topic_plugins_) {
@@ -47,7 +47,17 @@ void Viewer3D::visualize()
 template <typename T>
 std::unique_ptr<T> Viewer3D::createPlugin()
 {
-  auto plugin = std::make_unique<T>(node_, frame_tree_);
+  auto plugin = std::make_unique<T>(node_, frame_tree_, getBaseFrame());
   plugin->init();
   return plugin;
+}
+
+void Viewer3D::setBaseFrame(const std::string & base_frame)
+{
+  base_frame_ = base_frame;
+}
+
+std::string Viewer3D::getBaseFrame()
+{
+  return base_frame_;
 }

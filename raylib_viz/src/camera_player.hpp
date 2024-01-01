@@ -14,13 +14,16 @@ private:
     std::string viewer_frame = "base_link";
     Camera3D camera;
     int camera_mode = CAMERA_THIRD_PERSON;
+    Vector3 camera_initial_offset = {0.0f, 5.0f, -10.0f};
+    Vector3 camera_initial_origin = {0.0f, 0.0f, 0.0f};
+    Vector3 camera_initial_up = {0.0f, 1.0f, 0.0f};
     CameraInfo()
     {
-      camera.position = Vector3{0.0f, 5.0f, -10.0f};  // Camera position
-      camera.target = Vector3{0.0f, 0.0f, 0.0f};      // Camera looking at point
-      camera.up = Vector3{0.0f, 1.0f, 0.0f};          // Camera up vector (rotation towards target)
-      camera.fovy = 45.0f;                            // Camera field-of-view Y
-      camera.projection = CAMERA_PERSPECTIVE;         // Camera mode type
+      camera.position = camera_initial_offset;  // Camera position
+      camera.target = camera_initial_origin;    // Camera looking at point
+      camera.up = camera_initial_up;            // Camera up vector (rotation towards target)
+      camera.fovy = 45.0f;                      // Camera field-of-view Y
+      camera.projection = CAMERA_PERSPECTIVE;   // Camera mode type
     }
   };
   CameraInfo camera_info_;

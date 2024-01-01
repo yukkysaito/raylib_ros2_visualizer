@@ -40,8 +40,7 @@ public:
     const auto message = buffer_.getDataByTimestamp(
       std::chrono::system_clock::time_point(std::chrono::seconds(0)), false);
     if (message) {
-      const auto & data = message->data;
-      for (const auto & object : data->objects) {
+      for (const auto & object : message->data->objects) {
         const auto & pose = object.kinematics.initial_pose_with_covariance.pose;
         DrawSphere(
           convertFromROS<Vector3>(pose.position.x, pose.position.y, pose.position.z), 1.0,

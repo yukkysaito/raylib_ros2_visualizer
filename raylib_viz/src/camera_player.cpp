@@ -13,6 +13,7 @@
 #include "camera_player.hpp"
 
 #include "raymath.h"
+#include "util.hpp"
 
 CameraPlayer::CameraPlayer(std::shared_ptr<FrameTree> frame_tree) : frame_tree_(frame_tree)
 {
@@ -32,6 +33,7 @@ void CameraPlayer::updateCamera()
 {
   auto & camera_mode = camera_info_.camera_mode;
   auto & camera = camera_info_.camera;
+  auto & camera_initial_offset = camera_info_.camera_initial_offset;
 
   // Handle camera mode changes
   if (IsKeyPressed(KEY_ONE)) {
@@ -54,14 +56,14 @@ void CameraPlayer::updateCamera()
       // Create isometric view
       camera_mode = CAMERA_THIRD_PERSON;
       camera = CameraInfo().camera;
-      camera.position = Vector3{0.0f, 20.0f, 0.0f};
+      camera.position = camera_initial_offset;
       camera.up = Vector3{0.0f, 0.0f, 1.0f};
       camera.projection = CAMERA_ORTHOGRAPHIC;
     } else if (camera.projection == CAMERA_ORTHOGRAPHIC) {
       // Reset to default view
       camera = CameraInfo().camera;
       camera_mode = CAMERA_THIRD_PERSON;
-      camera.position = Vector3{0.0f, 5.0f, -10.0f};
+      camera.position = camera_initial_offset;
       camera.up = Vector3{0.0f, 1.0f, 0.0f};
       camera.projection = CAMERA_PERSPECTIVE;
     }
@@ -96,38 +98,36 @@ void CameraPlayer::updateCamera()
     (target_movement_.y - current_movement_.y) * move_speed_ * delta_time, 0.0f};
   float zoom_delta = (target_zoom_ - current_zoom_) * move_speed_ * delta_time;
 
+  // Get the transform from the map frame to the viewer frame
+  auto ros_transform = frame_tree_->getTransform(
+    "map", "base_link", std::chrono::system_clock::now(), std::chrono::duration<double>(0.0));
+  if (ros_transform) {
+    const auto target_vec = camera_info_.camera_initial_origin;
+    const auto position_vec = camera_info_.camera_initial_offset;
+    const auto ros_target_vec = convertToROS<Eigen::Vector3d>(target_vec);
+    const auto ros_position_vec = convertToROS<Eigen::Vector3d>(position_vec);
+
+    const auto transformed_ros_target_vec = transformVector(*ros_transform, ros_target_vec);
+    const auto transformed_ros_position_vec = transformVector(*ros_transform, ros_position_vec);
+    const auto transformed_target_vec = convertFromROS<Vector3>(transformed_ros_target_vec);
+    const auto transformed_position_vec = convertFromROS<Vector3>(transformed_ros_position_vec);
+
+    camera.position = Vector3{
+      transformed_position_vec.x + current_movement_.x,
+      transformed_position_vec.y + current_movement_.y, transformed_position_vec.z};
+    camera.target = transformed_target_vec;
+
+    UpdateCameraPro(&camera, current_movement_, current_rotation_, current_zoom_);
+  }
+
+  // Update the camera
+  UpdateCameraPro(&camera, movement_delta, rotation_delta, zoom_delta);
+
   current_rotation_.x += rotation_delta.x;
   current_rotation_.y += rotation_delta.y;
   current_movement_.x += movement_delta.x;
   current_movement_.y += movement_delta.y;
   current_zoom_ += zoom_delta;
-
-// TODO : refactor
-#if 0
-  auto transform = frame_tree_->getTransform(
-    "map", "base_link", std::chrono::system_clock::now(), std::chrono::duration<double>(0.0));
-  if (transform) {
-    // 変換行列から位置を抽出
-    Eigen::Vector3d position = transform->block<3, 1>(0, 3);
-
-    // 変換行列から姿勢（クォータニオン）を抽出
-    Eigen::Quaterniond quaternion(transform->block<3, 3>(0, 0));
-
-    // RaylibのVector3に変換してカメラの位置を更新
-    camera.position = Vector3{
-      static_cast<float>(position.x()) + camera.position.x,
-      static_cast<float>(position.y()) + camera.position.y,
-      static_cast<float>(position.z()) + camera.position.z};
-
-    // クォータニオンからオイラー角に変換してカメラの回転を更新
-    Eigen::Vector3d euler_angles = quaternion.toRotationMatrix().eulerAngles(2, 1, 0);  // ZYX順
-    camera.target = Vector3{
-      static_cast<float>(euler_angles.x()), static_cast<float>(euler_angles.y()),
-      static_cast<float>(euler_angles.z())};
-  }
-#endif
-  // Update the camera
-  UpdateCameraPro(&camera, movement_delta, rotation_delta, zoom_delta);
 }
 
 void CameraPlayer::drawCameraInfo()

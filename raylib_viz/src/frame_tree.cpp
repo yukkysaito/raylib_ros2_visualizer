@@ -24,12 +24,12 @@ std::optional<Eigen::Matrix4d> FrameTree::getTransform(
     auto timeout_duration = tf2::durationFromSec(timeout.count());
     geometry_msgs::msg::TransformStamped transformStamped;
 
-    transformStamped = tf_buffer_.lookupTransform(to_frame, from_frame, tf_time, timeout_duration);
+    transformStamped = tf_buffer_.lookupTransform(from_frame, to_frame, tf_time, timeout_duration);
 
     return tf2::transformToEigen(transformStamped.transform).matrix();
   } catch (const tf2::ExtrapolationException &) {
     geometry_msgs::msg::TransformStamped transformStamped =
-      tf_buffer_.lookupTransform(to_frame, from_frame, tf2::TimePointZero);
+      tf_buffer_.lookupTransform(from_frame, to_frame, tf2::TimePointZero);
     return tf2::transformToEigen(transformStamped.transform).matrix();
 
   } catch (tf2::TransformException & ex) {

@@ -2,6 +2,8 @@
 
 #include "raylib.h"
 
+#include <Eigen/Dense>
+
 #include <algorithm>
 #include <chrono>
 #include <deque>
@@ -10,11 +12,62 @@
 #include <optional>
 #include <string>
 
+/**
+ * @brief Convert coordinates from ROS format to another format.
+ *
+ * @tparam T The target type for the converted coordinates.
+ * @param x The x coordinate in ROS format.
+ * @param y The y coordinate in ROS format.
+ * @param z The z coordinate in ROS format.
+ * @return T Converted coordinates in the target format.
+ */
 template <typename T>
 static inline T convertFromROS(const float & x, const float & y, const float & z)
 {
-  return T{-x, z, -y};
+  return T{y, z, x};
 }
+
+template <typename T>
+static inline T convertFromROS(const Vector3 & vec)
+{
+  return convertFromROS<T>(vec.x, vec.y, vec.z);
+}
+
+template <typename T>
+static inline T convertFromROS(const Eigen::Vector3d & vec)
+{
+  return convertFromROS<T>(vec.x(), vec.y(), vec.z());
+}
+
+template <typename T>
+static inline T convertToROS(const float & x, const float & y, const float & z)
+{
+  return T{z, x, y};
+}
+
+template <typename T>
+static inline T convertToROS(const Vector3 & vec)
+{
+  return convertToROS<T>(vec.x, vec.y, vec.z);
+}
+
+template <typename T>
+static inline T convertToROS(const Eigen::Vector3d & vec)
+{
+  return convertToROS<T>(vec.x(), vec.y(), vec.z());
+}
+
+Eigen::Vector3d transformVector(
+  const Eigen::Matrix4d & transformMatrix, double x, double y, double z);
+
+Eigen::Vector3d transformVector(
+  const Eigen::Matrix4d & transformMatrix, const Eigen::Vector3d & vec);
+
+Matrix convertFromEigenMatrix(const Eigen::Matrix4d & eigen_matrix);
+
+Matrix convertFromEigenMatrix(const Eigen::Matrix4f & eigen_matrix);
+
+Eigen::Matrix4d convertFromROS(const Eigen::Matrix4d & ros_matrix);
 
 /**
  * @brief The MessageTraits struct is used to specialize timestamp and frame retrieval for different
@@ -71,7 +124,7 @@ private:
 
   std::deque<Message> buffer_; /**< The deque to store messages. */
   std::mutex mutex_;           /**< Mutex for thread safety. */
-  size_t buffer_max_size_ = 3; /**< The maximum size of the buffer. */
+  size_t buffer_max_size_ = 1; /**< The maximum size of the buffer. */
 
 public:
   /**
