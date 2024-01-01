@@ -182,14 +182,4 @@ private:
     }
     UpdateMeshBuffer(*mesh, 0, mesh->vertices, points_count * 3 * sizeof(float), 0);
   }
-  // Eigen::Quaterniond rotateAxes(const Eigen::Quaterniond & quaternion)
-  // {
-  //   Eigen::Quaterniond rotated_quaternion;
-  //   rotated_quaternion.x() = quaternion.y();
-  //   rotated_quaternion.y() = quaternion.z();
-  //   rotated_quaternion.z() = quaternion.x();
-  //   rotated_quaternion.w() = quaternion.w();
-
-  //   return rotated_quaternion;
-  // }
 };
