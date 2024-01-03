@@ -25,15 +25,15 @@ public:
     const std::string & base_frame)
   : TopicPluginInterface(node, frame_tree, base_frame)
   {
-    point_mesh_ = std::make_unique<Mesh>();
-    initPointCloudMesh(point_mesh_);
-    point_material_ = LoadMaterialDefault();
-    point_material_.maps[MATERIAL_MAP_DIFFUSE].color = BLUE;
+    mesh_ = std::make_unique<Mesh>();
+    initMesh(mesh_);
+    material_ = LoadMaterialDefault();
+    material_.maps[MATERIAL_MAP_DIFFUSE].color = RED;
   }
   ~PointCloudPlugin()
   {
-    UnloadMaterial(point_material_);
-    UnloadMesh(*point_mesh_);
+    UnloadMaterial(material_);
+    UnloadMesh(*mesh_);
   }
 
   void init() override
@@ -60,24 +60,24 @@ public:
       auto start = std::chrono::high_resolution_clock::now();
 
 #if RESET_EVERY_FRAME
-      if (uploaded_mesh_) UnloadMesh(*point_mesh_);
-      initPointCloudMesh(point_mesh_);
-      generatePointCloudMesh(point_mesh_, message->data);
-      UploadMesh(point_mesh_.get(), true);
+      if (uploaded_mesh_) UnloadMesh(*mesh_);
+      initMesh(mesh_);
+      generatePointCloudMesh(mesh_, message->data);
+      UploadMesh(mesh_.get(), true);
 #else
       const int points_count = message->data->width * message->data->height;
       if (!uploaded_mesh_) {
-        generatePointCloudMesh(point_mesh_, message->data);
-        UploadMesh(point_mesh_.get(), true);
+        generatePointCloudMesh(mesh_, message->data);
+        UploadMesh(mesh_.get(), true);
       } else if (points_count_max_ < points_count) {
         std::cout << "GPU memory is re-allocated. Pointcloud max size change from"
                   << points_count_max_ << "to" << points_count << std::endl;
-        UnloadMesh(*point_mesh_);
+        UnloadMesh(*mesh_);
         points_count_max_ = points_count;
-        initPointCloudMesh(point_mesh_);
-        UploadMesh(point_mesh_.get(), true);
+        initMesh(mesh_);
+        UploadMesh(mesh_.get(), true);
       } else {
-        updatePointCloudMesh(point_mesh_, message->data);
+        updatePointCloudMesh(mesh_, message->data);
       }
 #endif
       auto end = std::chrono::high_resolution_clock::now();
@@ -101,7 +101,7 @@ public:
         Eigen::Matrix4d eigen_matrix = convertFromROS(transform_opt.value());
         Matrix matrix = convertFromEigenMatrix(eigen_matrix);
 
-        DrawMesh(*point_mesh_, point_material_, matrix);
+        DrawMesh(*mesh_, material_, matrix);
       }
     }
     rlDisableWireMode();
@@ -113,38 +113,38 @@ private:
   MessageBuffer<sensor_msgs::msg::PointCloud2::SharedPtr> buffer_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subscription_;
   std::chrono::system_clock::time_point uploaded_mesh_timestamp_;
-  std::unique_ptr<Mesh> point_mesh_;
-  Material point_material_;
+  std::unique_ptr<Mesh> mesh_;
+  Material material_;
   bool uploaded_mesh_ = false;
-  int points_count_max_ = 1000000;
-  void initPointCloudMesh(const std::unique_ptr<Mesh> & mesh)
-  {
-    mesh->triangleCount = 0;
-    mesh->texcoords = NULL;
-    mesh->texcoords2 = NULL;
-    mesh->normals = NULL;
-    mesh->tangents = NULL;
-    mesh->colors = NULL;
-    mesh->indices = NULL;
-    mesh->animVertices = NULL;
-    mesh->animNormals = NULL;
-    mesh->boneIds = NULL;
-    mesh->boneWeights = NULL;
-    mesh->vaoId = 0;
-    mesh->vboId = NULL;
-    mesh->vertexCount = 0;
-    mesh->vertices = NULL;
-#if !RESET_EVERY_FRAME
-    mesh->vertices = (float *)RL_MALLOC(points_count_max_ * 3 * sizeof(float));
+  // int points_count_max_ = 1000000;
+  //   void initPointCloudMesh(const std::unique_ptr<Mesh> & mesh)
+  //   {
+  //     mesh->triangleCount = 0;
+  //     mesh->texcoords = NULL;
+  //     mesh->texcoords2 = NULL;
+  //     mesh->normals = NULL;
+  //     mesh->tangents = NULL;
+  //     mesh->colors = NULL;
+  //     mesh->indices = NULL;
+  //     mesh->animVertices = NULL;
+  //     mesh->animNormals = NULL;
+  //     mesh->boneIds = NULL;
+  //     mesh->boneWeights = NULL;
+  //     mesh->vaoId = 0;
+  //     mesh->vboId = NULL;
+  //     mesh->vertexCount = 0;
+  //     mesh->vertices = NULL;
+  // #if !RESET_EVERY_FRAME
+  //     mesh->vertices = (float *)RL_MALLOC(points_count_max_ * 3 * sizeof(float));
 
-    mesh->vertexCount = points_count_max_;
-    for (int i = 0; i < points_count_max_ * 3; i += 3) {
-      mesh->vertices[i] = 0;
-      mesh->vertices[i + 1] = 0;
-      mesh->vertices[i + 2] = 0;
-    }
-#endif
-  }
+  //     mesh->vertexCount = points_count_max_;
+  //     for (int i = 0; i < points_count_max_ * 3; i += 3) {
+  //       mesh->vertices[i] = 0;
+  //       mesh->vertices[i + 1] = 0;
+  //       mesh->vertices[i + 2] = 0;
+  //     }
+  // #endif
+  //   }
 
   void generatePointCloudMesh(
     const std::unique_ptr<Mesh> & mesh, const sensor_msgs::msg::PointCloud2::SharedPtr data)
@@ -166,6 +166,7 @@ private:
     }
   }
 
+#if !RESET_EVERY_FRAME
   void updatePointCloudMesh(
     const std::unique_ptr<Mesh> & mesh, const sensor_msgs::msg::PointCloud2::SharedPtr data)
   {
@@ -182,4 +183,5 @@ private:
     }
     UpdateMeshBuffer(*mesh, 0, mesh->vertices, points_count * 3 * sizeof(float), 0);
   }
+#endif
 };

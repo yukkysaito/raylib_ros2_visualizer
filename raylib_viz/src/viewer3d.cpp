@@ -7,7 +7,7 @@
 Viewer3D::Viewer3D(rclcpp::Node * node)
 : node_(node), frame_tree_(std::make_shared<FrameTree>(node)), camera_player_(frame_tree_)
 {
-  topic_plugins_.push_back(createPlugin<PointCloudPlugin>());
+  // topic_plugins_.push_back(createPlugin<PointCloudPlugin>());
   topic_plugins_.push_back(createPlugin<ObjectsPlugin>());
 }
 
