@@ -10,7 +10,7 @@
 void initMesh(const std::unique_ptr<Mesh> & mesh);
 
 void generateBoundingBox3D(
-  float length, float width, float height, const Eigen::Translation3f & translation,
+  float width, float height, float length, const Eigen::Translation3f & translation,
   const Eigen::Quaternionf & quaternion, std::vector<Vector3> & vertices,
   std::vector<Vector3> & normals, std::vector<unsigned short> & indices);
 

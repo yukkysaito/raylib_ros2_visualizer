@@ -119,53 +119,46 @@ void initMesh(const std::unique_ptr<Mesh> & mesh)
 }
 
 void generateBoundingBox3D(
-  float length, float width, float height, const Eigen::Translation3f & translation,
+  float width, float height, float length, const Eigen::Translation3f & translation,
   const Eigen::Quaternionf & quaternion, std::vector<Vector3> & vertices,
   std::vector<Vector3> & normals, std::vector<unsigned short> & indices)
 {
-  // Eigenを使用して変換行列を計算
-  //   Eigen::Matrix3f rotation_matrix = quaternion.toRotationMatrix();
-  //   Eigen::Matrix4f transform = Eigen::Matrix4f::Zero();
-  //   transform.block<3, 3>(0, 0) = rotation_matrix;
-  //   transform(0, 3) = translation.x();
-  //   transform(1, 3) = translation.y();
-  //   transform(2, 3) = translation.z();
-  //   transform.row(3) << 0, 0, 0, 1;
-
+  // Combine translation and rotation to form the transformation matrix
   Eigen::Matrix4f transform = (translation * quaternion).matrix();
 
-  // バウンディングボックスのローカル頂点
+  // Define the local vertices of the bounding box
   std::vector<Eigen::Vector4f> local_vertices = {
-    {length / 2, width / 2, height / 2, 1},    {length / 2, -width / 2, height / 2, 1},
-    {-length / 2, -width / 2, height / 2, 1},  {-length / 2, width / 2, height / 2, 1},
-    {length / 2, width / 2, -height / 2, 1},   {length / 2, -width / 2, -height / 2, 1},
-    {-length / 2, -width / 2, -height / 2, 1}, {-length / 2, width / 2, -height / 2, 1}};
+    {width / 2, height / 2, length / 2, 1},   {width / 2, height / 2, -length / 2, 1},
+    {-width / 2, height / 2, length / 2, 1},  {-width / 2, height / 2, -length / 2, 1},
+    {width / 2, -height / 2, length / 2, 1},  {width / 2, -height / 2, -length / 2, 1},
+    {-width / 2, -height / 2, length / 2, 1}, {-width / 2, -height / 2, -length / 2, 1}};
 
-  // 各面の頂点インデックス
+  // Define vertex indices for each face of the box
   std::vector<unsigned short> local_indices = {
-    0, 1, 2, 2, 3, 0,  // 上面
-    4, 5, 6, 6, 7, 4,  // 下面
-    0, 4, 7, 7, 3, 0,  // 前面
-    1, 5, 6, 6, 2, 1,  // 後面
-    0, 4, 5, 5, 1, 0,  // 右面
-    3, 7, 6, 6, 2, 3   // 左面
+    0, 1, 2, 2, 1, 3,  // Top face
+    4, 6, 5, 6, 7, 5,  // Bottom face
+    0, 2, 4, 4, 2, 6,  // Front face
+    1, 5, 3, 5, 7, 3,  // Back face
+    2, 3, 6, 6, 3, 7,  // Right face
+    0, 4, 1, 4, 5, 1   // Left face
   };
 
-  // 各面の法線ベクトル
+  // Define normal vectors for each face
   std::vector<Eigen::Vector3f> face_normals = {
-    {0, 0, 1},   // 上面
-    {0, 0, -1},  // 下面
-    {0, 1, 0},   // 前面
-    {0, -1, 0},  // 後面
-    {1, 0, 0},   // 右面
-    {-1, 0, 0}   // 左面
+    {0, 1, 0},   // Top face
+    {0, -1, 0},  // Bottom face
+    {0, 0, 1},   // Front face
+    {0, 0, -1},  // Back face
+    {-1, 0, 0},  // Right face
+    {1, 0, 0}    // Left face
   };
 
   vertices.clear();
   normals.clear();
-  // indices.clear();  // インデックスが必要な場合にコメントアウトを解除
+  // Uncomment the following line if indices need to be cleared
+  // indices.clear();
 
-  //   変換行列を使用して頂点と法線を変換し、配列に追加
+  // Transform vertices and normals using the transformation matrix and add them to the arrays
   for (size_t i = 0; i < local_indices.size(); i += 3) {
     Eigen::Vector4f transformed_vertex1 = transform * local_vertices[local_indices[i]];
     Eigen::Vector4f transformed_vertex2 = transform * local_vertices[local_indices[i + 1]];
@@ -175,60 +168,16 @@ void generateBoundingBox3D(
     vertices.push_back({transformed_vertex2[0], transformed_vertex2[1], transformed_vertex2[2]});
     vertices.push_back({transformed_vertex3[0], transformed_vertex3[1], transformed_vertex3[2]});
 
-    // 法線の計算
+    // Calculate and rotate normals
     Eigen::Vector3f normal = face_normals[i / 6];
-    normal = quaternion * normal;  // 法線を回転
+    normal = quaternion * normal;  // Rotate the normal
     normals.push_back({normal[0], normal[1], normal[2]});
     normals.push_back({normal[0], normal[1], normal[2]});
     normals.push_back({normal[0], normal[1], normal[2]});
 
-    // インデックスの追加
+    // Add indices
     indices.push_back(local_indices[i]);
     indices.push_back(local_indices[i + 1]);
     indices.push_back(local_indices[i + 2]);
   }
-
-  //   {
-  //     size_t i = 0;
-  //     Eigen::Vector4f transformed_vertex1 = transform * local_vertices[local_indices[i]];
-  //     Eigen::Vector4f transformed_vertex2 = transform * local_vertices[local_indices[i + 1]];
-  //     Eigen::Vector4f transformed_vertex3 = transform * local_vertices[local_indices[i + 2]];
-  //     std::cout << "translation: " << translation.x() << ", " << translation.y() << ", "
-  //               << translation.z() << std::endl;
-  //     std::cout << "quaternion: " << quaternion.x() << ", " << quaternion.y() << ", "
-  //               << quaternion.z() << ", " << quaternion.w() << std::endl;
-  //     std::cout << "local_indices[i]: " << local_indices[i] << std::endl;
-  //     std::cout << "local_indices[i + 1]: " << local_indices[i + 1] << std::endl;
-  //     std::cout << "local_indices[i + 2]: " << local_indices[i + 2] << std::endl;
-  //     std::cout << "local_vertices[local_indices[i]]: " << local_vertices[local_indices[i]]
-  //               << std::endl;
-  //     std::cout << "local_vertices[local_indices[i + 1]]: " << local_vertices[local_indices[i +
-  //     1]]
-  //               << std::endl;
-  //     std::cout << "local_vertices[local_indices[i + 2]]: " << local_vertices[local_indices[i +
-  //     2]]
-  //               << std::endl;
-  //     std::cout << "transformed_vertex1: " << transformed_vertex1 << std::endl;
-  //     std::cout << "transformed_vertex2: " << transformed_vertex2 << std::endl;
-  //     std::cout << "transformed_vertex3: " << transformed_vertex3 << std::endl;
-  //     std::cout << "transform: " << transform << std::endl;
-  //     std::cout << "------------------------------------" << std::endl;
-  //     vertices.push_back({transformed_vertex1[0], transformed_vertex1[1],
-  //     transformed_vertex1[2]}); vertices.push_back({transformed_vertex2[0],
-  //     transformed_vertex2[1], transformed_vertex2[2]});
-  //     vertices.push_back({transformed_vertex3[0], transformed_vertex3[1],
-  //     transformed_vertex3[2]});
-
-  //     // 法線の計算
-  //     Eigen::Vector3f normal = face_normals[i / 6];
-  //     normal = quaternion * normal;  // 法線を回転
-  //     normals.push_back({normal[0], normal[1], normal[2]});
-  //     normals.push_back({normal[0], normal[1], normal[2]});
-  //     normals.push_back({normal[0], normal[1], normal[2]});
-
-  //     // インデックスの追加
-  //     indices.push_back(local_indices[i]);
-  //     indices.push_back(local_indices[i + 1]);
-  //     indices.push_back(local_indices[i + 2]);
-  //   }
 }

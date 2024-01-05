@@ -37,6 +37,6 @@ rclcpp_components_register_node(raylib_viz
 )
 
 ament_auto_package(INSTALL_TO_SHARE
-  launch
+  # launch
   include
 )
