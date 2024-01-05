@@ -121,6 +121,19 @@ private:
         generateBoundingBox3D(
           dimensions.x, dimensions.y, dimensions.z, translation, quaternion, vertices, normals,
           indices);
+      } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+        const auto dimensions =
+          convertFromROS<Vector3>(shape.dimensions.x, shape.dimensions.y, shape.dimensions.z);
+        generateCylinder3D(
+          dimensions.x, dimensions.y, translation, quaternion, vertices, normals, indices);
+      } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+        std::vector<Vector2> polygon_2d;
+        for (const auto & point : shape.footprint.points) {
+          const auto vector = convertFromROS<Vector3>(point.x, point.y, point.z);
+          polygon_2d.push_back({vector.x, vector.z});
+        }
+        generatePolygon3D(
+          polygon_2d, shape.dimensions.z, translation, quaternion, vertices, normals, indices);
       }
       vertex_count += vertices.size();
       normal_count += normals.size();
@@ -144,21 +157,5 @@ private:
       mesh->normals[i * 3 + 1] = all_normals[i].y;
       mesh->normals[i * 3 + 2] = all_normals[i].z;
     }
-    // // create vertices
-    // for (int i = 0; i < points_count * 3; i += 3, ++iter_x, ++iter_y, ++iter_z) {
-    //   mesh->vertices[i] = *iter_y;
-    //   mesh->vertices[i + 1] = *iter_z;
-    //   mesh->vertices[i + 2] = *iter_x;
-    // }
-    // for (const auto & object : data->objects) {
-    //   const auto & pose = object.kinematics.initial_pose_with_covariance.pose;
-    // const auto & shape = object.shape;
-    // const auto z_offset = shape.dimensions.z * 0.5;
-
-    //   DrawSphere(
-    //     convertFromROS<Vector3>(pose.position.x, pose.position.y, pose.position.z), 1.0,
-    //     Color{255, 0, 0, 255});
-    // }
-    std::cout << "ObjectPlugin::generateObjectMesh()" << std::endl;
   }
 };

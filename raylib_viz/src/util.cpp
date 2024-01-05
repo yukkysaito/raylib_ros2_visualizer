@@ -1,6 +1,7 @@
 #include "util.hpp"
 
 #include <iostream>
+#include <optional>
 
 Eigen::Vector3d transformVector(
   const Eigen::Matrix4d & transformMatrix, double x, double y, double z)
@@ -123,6 +124,7 @@ void generateBoundingBox3D(
   const Eigen::Quaternionf & quaternion, std::vector<Vector3> & vertices,
   std::vector<Vector3> & normals, std::vector<unsigned short> & indices)
 {
+#if 0
   // Combine translation and rotation to form the transformation matrix
   Eigen::Matrix4f transform = (translation * quaternion).matrix();
 
@@ -155,8 +157,7 @@ void generateBoundingBox3D(
 
   vertices.clear();
   normals.clear();
-  // Uncomment the following line if indices need to be cleared
-  // indices.clear();
+  indices.clear();
 
   // Transform vertices and normals using the transformation matrix and add them to the arrays
   for (size_t i = 0; i < local_indices.size(); i += 3) {
@@ -179,5 +180,173 @@ void generateBoundingBox3D(
     indices.push_back(local_indices[i]);
     indices.push_back(local_indices[i + 1]);
     indices.push_back(local_indices[i + 2]);
+  }
+
+#else
+  std::vector<Vector2> polygon_2d = {
+    {width / 2, length / 2},
+    {width / 2, -length / 2},
+    {-width / 2, -length / 2},
+    {-width / 2, length / 2}};
+  generatePolygon3D(polygon_2d, height, translation, quaternion, vertices, normals, indices);
+#endif
+}
+
+Eigen::Vector3f calcCrossProduct(const Eigen::Vector3f & a, const Eigen::Vector3f & b)
+{
+  return Eigen::Vector3f(
+    a.y() * b.z() - a.z() * b.y(), a.z() * b.x() - a.x() * b.z(), a.x() * b.y() - a.y() * b.x());
+}
+
+std::vector<Vector2> inverseClockWise(const std::vector<Vector2> & polygon_2d)
+{
+  // Create a copy of the original polygon
+  std::vector<Vector2> inversed_polygon = polygon_2d;
+
+  // Reverse the order of vertices
+  std::reverse(inversed_polygon.begin(), inversed_polygon.end());
+
+  return inversed_polygon;
+}
+
+bool isClockWise(const std::vector<Vector2> & polygon_2d)
+{
+  const int n = polygon_2d.size();
+  const double x_offset = polygon_2d.at(0).x;
+  const double y_offset = polygon_2d.at(0).y;
+  double sum = 0.0;
+  for (std::size_t i = 0; i < polygon_2d.size(); ++i) {
+    sum += (polygon_2d.at(i).x - x_offset) * (polygon_2d.at((i + 1) % n).y - y_offset) -
+           (polygon_2d.at(i).y - y_offset) * (polygon_2d.at((i + 1) % n).x - x_offset);
+  }
+
+  return sum < 0.0;
+}
+
+void generateCylinder3D(
+  float radius, float height, const Eigen::Translation3f & translation,
+  const Eigen::Quaternionf & quaternion, std::vector<Vector3> & vertices,
+  std::vector<Vector3> & normals, std::vector<unsigned short> & indices)
+{
+  constexpr int n = 12;
+  std::vector<Vector2> polygon_2d;
+  for (int i = 0; i < n; ++i) {
+    Vector2 point;
+
+    point.x = std::cos(
+                (static_cast<float>(n - i) / static_cast<float>(n)) * 2.0 * M_PI +
+                M_PI / static_cast<float>(n)) *
+              radius;
+    point.y = std::sin(
+                (static_cast<float>(n - i) / static_cast<float>(n)) * 2.0 * M_PI +
+                M_PI / static_cast<float>(n)) *
+              radius;
+    polygon_2d.push_back(point);
+  }
+  generatePolygon3D(polygon_2d, height, translation, quaternion, vertices, normals, indices);
+}
+
+void generatePolygon3D(
+  const std::vector<Vector2> & polygon_2d, float height, const Eigen::Translation3f & translation,
+  const Eigen::Quaternionf & quaternion, std::vector<Vector3> & vertices,
+  std::vector<Vector3> & normals, std::vector<unsigned short> & indices)
+{
+  // Combine translation and rotation to form the transformation matrix
+  Eigen::Matrix4f transform = (translation * quaternion).matrix();
+
+  vertices.clear();
+  normals.clear();
+  indices.clear();
+
+  // check clockwise
+  if (!isClockWise(polygon_2d)) {
+    std::cerr << "Polygon is not clockwise" << std::endl;
+    return;
+  }
+
+  // Top
+  std::optional<Eigen::Vector3f> top_normal = std::nullopt;
+  for (size_t i = 2; i < polygon_2d.size(); ++i) {
+    std::vector<Eigen::Vector4f> local_vertices{
+      {polygon_2d.at(0).x, height / 2, polygon_2d.at(0).y, 1},
+      {polygon_2d.at(i - 1).x, height / 2, polygon_2d.at(i - 1).y, 1},
+      {polygon_2d.at(i).x, height / 2, polygon_2d.at(i).y, 1}};
+
+    Eigen::Vector4f transformed_vertex1, transformed_vertex2, transformed_vertex3;
+    transformed_vertex1 = transform * local_vertices[0];
+    transformed_vertex2 = transform * local_vertices[1];
+    transformed_vertex3 = transform * local_vertices[2];
+
+    vertices.push_back({transformed_vertex1[0], transformed_vertex1[1], transformed_vertex1[2]});
+    vertices.push_back({transformed_vertex2[0], transformed_vertex2[1], transformed_vertex2[2]});
+    vertices.push_back({transformed_vertex3[0], transformed_vertex3[1], transformed_vertex3[2]});
+
+    if (!top_normal.has_value()) {
+      top_normal = calcCrossProduct(
+        transformed_vertex2.head<3>() - transformed_vertex1.head<3>(),
+        transformed_vertex3.head<3>() - transformed_vertex1.head<3>());
+    }
+    const auto & normal = top_normal.value();
+    normals.push_back({normal[0], normal[1], normal[2]});
+    normals.push_back({normal[0], normal[1], normal[2]});
+    normals.push_back({normal[0], normal[1], normal[2]});
+  }
+
+  // Side
+  for (size_t i = 0; i < polygon_2d.size(); ++i) {
+    size_t j = (i + 1) % polygon_2d.size();
+
+    std::vector<Eigen::Vector4f> local_vertices{
+      {polygon_2d.at(i).x, height / 2, polygon_2d.at(i).y, 1},
+      {polygon_2d.at(i).x, -height / 2, polygon_2d.at(i).y, 1},
+      {polygon_2d.at(j).x, -height / 2, polygon_2d.at(j).y, 1},
+      {polygon_2d.at(j).x, height / 2, polygon_2d.at(j).y, 1}};
+
+    Eigen::Vector4f transformed_vertex1, transformed_vertex2, transformed_vertex3,
+      transformed_vertex4;
+    transformed_vertex1 = transform * local_vertices[0];
+    transformed_vertex2 = transform * local_vertices[1];
+    transformed_vertex3 = transform * local_vertices[2];
+    transformed_vertex4 = transform * local_vertices[3];
+
+    vertices.push_back({transformed_vertex1[0], transformed_vertex1[1], transformed_vertex1[2]});
+    vertices.push_back({transformed_vertex2[0], transformed_vertex2[1], transformed_vertex2[2]});
+    vertices.push_back({transformed_vertex3[0], transformed_vertex3[1], transformed_vertex3[2]});
+    vertices.push_back({transformed_vertex1[0], transformed_vertex1[1], transformed_vertex1[2]});
+    vertices.push_back({transformed_vertex3[0], transformed_vertex3[1], transformed_vertex3[2]});
+    vertices.push_back({transformed_vertex4[0], transformed_vertex4[1], transformed_vertex4[2]});
+
+    const Eigen::Vector3f normal = calcCrossProduct(
+      transformed_vertex2.head<3>() - transformed_vertex1.head<3>(),
+      transformed_vertex3.head<3>() - transformed_vertex1.head<3>());
+    normals.push_back({normal[0], normal[1], normal[2]});
+    normals.push_back({normal[0], normal[1], normal[2]});
+    normals.push_back({normal[0], normal[1], normal[2]});
+    normals.push_back({normal[0], normal[1], normal[2]});
+    normals.push_back({normal[0], normal[1], normal[2]});
+    normals.push_back({normal[0], normal[1], normal[2]});
+  }
+
+  // Bottom
+  Eigen::Vector3f bottom_normal = -top_normal.value();
+  for (size_t i = 2; i < polygon_2d.size(); ++i) {
+    std::vector<Eigen::Vector4f> local_vertices{
+      {polygon_2d.at(0).x, -height / 2, polygon_2d.at(0).y, 1},
+      {polygon_2d.at(i).x, -height / 2, polygon_2d.at(i).y, 1},
+      {polygon_2d.at(i - 1).x, -height / 2, polygon_2d.at(i - 1).y, 1}};
+
+    Eigen::Vector4f transformed_vertex1, transformed_vertex2, transformed_vertex3;
+    transformed_vertex1 = transform * local_vertices[0];
+    transformed_vertex2 = transform * local_vertices[1];
+    transformed_vertex3 = transform * local_vertices[2];
+
+    vertices.push_back({transformed_vertex1[0], transformed_vertex1[1], transformed_vertex1[2]});
+    vertices.push_back({transformed_vertex2[0], transformed_vertex2[1], transformed_vertex2[2]});
+    vertices.push_back({transformed_vertex3[0], transformed_vertex3[1], transformed_vertex3[2]});
+
+    const auto & normal = bottom_normal;
+    normals.push_back({normal[0], normal[1], normal[2]});
+    normals.push_back({normal[0], normal[1], normal[2]});
+    normals.push_back({normal[0], normal[1], normal[2]});
   }
 }
