@@ -17,13 +17,13 @@ class ObjectsPlugin : public TopicPluginInterface
 public:
   ObjectsPlugin(
     rclcpp::Node * node, const std::shared_ptr<FrameTree> frame_tree,
-    const std::string & base_frame)
-  : TopicPluginInterface(node, frame_tree, base_frame)
+    const std::string & base_frame, const std::string & topic_name)
+  : TopicPluginInterface(node, frame_tree, base_frame, topic_name)
   {
     mesh_ = std::make_unique<Mesh>();
     initMesh(mesh_);
     material_ = LoadMaterialDefault();
-    material_.maps[MATERIAL_MAP_DIFFUSE].color = BLUE;
+    material_.maps[MATERIAL_MAP_DIFFUSE].color = {0, 131, 241, 100};
   }
 
   ~ObjectsPlugin()
@@ -36,7 +36,7 @@ public:
   {
     subscription_ =
       node_->create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
-        "/perception/object_recognition/objects", rclcpp::SensorDataQoS().keep_last(1),
+        topic_name_, rclcpp::SensorDataQoS().keep_last(1),
         std::bind(&ObjectsPlugin::onObjects, this, std::placeholders::_1));
   }
 
@@ -71,19 +71,8 @@ public:
 
   void visualize3D() override
   {
-    // const auto message = buffer_.getDataByTimestamp(
-    //   std::chrono::system_clock::time_point(std::chrono::seconds(0)), false);
-    // if (message) {
-    //   for (const auto & object : message->data->objects) {
-    //     const auto & pose = object.kinematics.initial_pose_with_covariance.pose;
-    //     DrawSphere(
-    //       convertFromROS<Vector3>(pose.position.x, pose.position.y, pose.position.z), 1.0,
-    //       Color{255, 0, 0, 255});
-    //   }
-    // }
     if (uploaded_mesh_) {
       DrawMesh(*mesh_, material_, MatrixIdentity());
-      // DrawMesh(*mesh_, material_, MatrixIdentity(), RL_CULL_FRONT);
     }
   }
 
@@ -125,7 +114,7 @@ private:
         const auto dimensions =
           convertFromROS<Vector3>(shape.dimensions.x, shape.dimensions.y, shape.dimensions.z);
         generateCylinder3D(
-          dimensions.x, dimensions.y, translation, quaternion, vertices, normals, indices);
+          dimensions.x / 2, dimensions.y, translation, quaternion, vertices, normals, indices);
       } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
         std::vector<Vector2> polygon_2d;
         for (const auto & point : shape.footprint.points) {

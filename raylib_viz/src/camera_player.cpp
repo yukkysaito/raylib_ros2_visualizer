@@ -15,18 +15,21 @@
 #include "raymath.h"
 #include "util.hpp"
 
-CameraPlayer::CameraPlayer(std::shared_ptr<FrameTree> frame_tree) : frame_tree_(frame_tree)
+CameraPlayer::CameraPlayer(
+  std::shared_ptr<FrameTree> frame_tree, const std::string & viewer_frame,
+  const std::string & base_frame)
+: frame_tree_(frame_tree), viewer_frame_(viewer_frame), base_frame_(base_frame)
 {
 }
 
 void CameraPlayer::setViewerFrame(const std::string & viewer_frame)
 {
-  camera_info_.viewer_frame = viewer_frame;
+  viewer_frame_ = viewer_frame;
 }
 
 std::string CameraPlayer::getViewerFrame()
 {
-  return camera_info_.viewer_frame;
+  return viewer_frame_;
 }
 
 void CameraPlayer::updateCamera()
@@ -100,7 +103,8 @@ void CameraPlayer::updateCamera()
 
   // Get the transform from the map frame to the viewer frame
   auto ros_transform = frame_tree_->getTransform(
-    "map", "base_link", std::chrono::system_clock::now(), std::chrono::duration<double>(0.0));
+    base_frame_, viewer_frame_, std::chrono::system_clock::time_point(std::chrono::seconds(0)),
+    std::chrono::duration<double>(0.0));
   if (ros_transform) {
     const auto target_vec = camera_info_.camera_initial_origin;
     const auto position_vec = camera_info_.camera_initial_offset;

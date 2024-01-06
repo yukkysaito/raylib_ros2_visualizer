@@ -24,6 +24,7 @@ ament_auto_add_library(raylib_viz SHARED
   src/camera_player.cpp
   src/frame_tree.cpp
   src/util.cpp
+  src/grid.cpp
 )
 
 target_link_libraries(raylib_viz
@@ -37,6 +38,7 @@ rclcpp_components_register_node(raylib_viz
 )
 
 ament_auto_package(INSTALL_TO_SHARE
+
   # launch
   include
 )

@@ -11,7 +11,6 @@ class CameraPlayer
 private:
   struct CameraInfo
   {
-    std::string viewer_frame = "base_link";
     Camera3D camera;
     int camera_mode = CAMERA_THIRD_PERSON;
     Vector3 camera_initial_offset = {0.0f, 5.0f, -10.0f};
@@ -29,6 +28,8 @@ private:
   CameraInfo camera_info_;
 
   std::shared_ptr<FrameTree> frame_tree_;
+  std::string viewer_frame_;
+  std::string base_frame_;
 
   float mouse_movement_sensitivity_ = 0.1f;  // Mouse sensitivity for shift movement
   float mouse_rotation_sensitivity_ = 0.5f;  // Mouse sensitivity for rotation
@@ -42,7 +43,9 @@ private:
   float target_zoom_ = 0.0f;
 
 public:
-  explicit CameraPlayer(std::shared_ptr<FrameTree> frame_tree);
+  explicit CameraPlayer(
+    std::shared_ptr<FrameTree> frame_tree, const std::string & viewer_frame,
+    const std::string & base_frame);
   void updateCamera();
   void drawCameraInfo();
   void setViewerFrame(const std::string & viewer_frame);

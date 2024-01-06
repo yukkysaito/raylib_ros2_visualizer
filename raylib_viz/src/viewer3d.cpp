@@ -5,10 +5,16 @@
 
 #include <iostream>
 Viewer3D::Viewer3D(rclcpp::Node * node)
-: node_(node), frame_tree_(std::make_shared<FrameTree>(node)), camera_player_(frame_tree_)
+: node_(node),
+  frame_tree_(std::make_shared<FrameTree>(node)),
+  camera_player_(frame_tree_, "base_link", base_frame_),
+  grid_(std::make_unique<CartesianGrid>(frame_tree_, camera_player_.getViewerFrame(), base_frame_))
 {
-  topic_plugins_.push_back(createPlugin<PointCloudPlugin>());
-  topic_plugins_.push_back(createPlugin<ObjectsPlugin>());
+  topic_plugins_.push_back(
+    createPlugin<PointCloudPlugin>("/perception/obstacle_segmentation/pointcloud"));
+  topic_plugins_.push_back(createPlugin<ObjectsPlugin>("/perception/object_recognition/objects"));
+  topic_plugins_.push_back(
+    createPlugin<TrajectoryPlugin>("/planning/scenario_planning/trajectory"));
 }
 
 Viewer3D::~Viewer3D()
@@ -32,7 +38,8 @@ void Viewer3D::visualize()
     topic_plugin->visualize3D();
   }
 
-  DrawGrid(100, 1.0f);
+  grid_->drawGrid();
+
   EndMode3D();
 
   for (const auto & topic_plugin : topic_plugins_) {
@@ -45,9 +52,9 @@ void Viewer3D::visualize()
 }
 
 template <typename T>
-std::unique_ptr<T> Viewer3D::createPlugin()
+std::unique_ptr<T> Viewer3D::createPlugin(const std::string & topic_name)
 {
-  auto plugin = std::make_unique<T>(node_, frame_tree_, getBaseFrame());
+  auto plugin = std::make_unique<T>(node_, frame_tree_, getBaseFrame(), topic_name);
   plugin->init();
   return plugin;
 }

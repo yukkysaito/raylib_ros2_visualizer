@@ -22,8 +22,8 @@ class PointCloudPlugin : public TopicPluginInterface
 public:
   PointCloudPlugin(
     rclcpp::Node * node, const std::shared_ptr<FrameTree> frame_tree,
-    const std::string & base_frame)
-  : TopicPluginInterface(node, frame_tree, base_frame)
+    const std::string & base_frame, const std::string & topic_name)
+  : TopicPluginInterface(node, frame_tree, base_frame, topic_name)
   {
     mesh_ = std::make_unique<Mesh>();
     initMesh(mesh_);
@@ -39,7 +39,7 @@ public:
   void init() override
   {
     subscription_ = node_->create_subscription<sensor_msgs::msg::PointCloud2>(
-      "/perception/obstacle_segmentation/pointcloud", rclcpp::SensorDataQoS().keep_last(1),
+      topic_name_, rclcpp::SensorDataQoS().keep_last(1),
       std::bind(&PointCloudPlugin::onPointCloud, this, std::placeholders::_1));
   }
 
@@ -100,7 +100,6 @@ public:
       if (transform_opt) {
         Eigen::Matrix4d eigen_matrix = convertFromROS(transform_opt.value());
         Matrix matrix = convertFromEigenMatrix(eigen_matrix);
-
         DrawMesh(*mesh_, material_, matrix);
       }
     }
