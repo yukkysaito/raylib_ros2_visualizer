@@ -25,6 +25,7 @@ ament_auto_add_library(raylib_viz SHARED
   src/frame_tree.cpp
   src/util.cpp
   src/grid.cpp
+  src/ego_model.cpp
 )
 
 target_link_libraries(raylib_viz

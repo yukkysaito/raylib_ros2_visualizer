@@ -1,5 +1,6 @@
 #pragma once
 #include "camera_player.hpp"
+#include "ego_model.hpp"
 #include "frame_tree.hpp"
 #include "grid.hpp"
 #include "raylib.h"
@@ -19,6 +20,7 @@ private:
   std::shared_ptr<FrameTree> frame_tree_;
   CameraPlayer camera_player_;
   std::unique_ptr<GridInterface> grid_;
+  std::unique_ptr<EgoModel> ego_model_;
   std::vector<std::unique_ptr<TopicPluginInterface>> topic_plugins_;
   template <typename T>
   std::unique_ptr<T> createPlugin(const std::string & topic_name);

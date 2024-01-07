@@ -100,23 +100,23 @@ Eigen::Matrix4f convertFromROS(
   return affine_matrix;
 }
 
-void initMesh(const std::unique_ptr<Mesh> & mesh)
+void initMesh(Mesh & mesh)
 {
-  mesh->triangleCount = 0;
-  mesh->texcoords = NULL;
-  mesh->texcoords2 = NULL;
-  mesh->normals = NULL;
-  mesh->tangents = NULL;
-  mesh->colors = NULL;
-  mesh->indices = NULL;
-  mesh->animVertices = NULL;
-  mesh->animNormals = NULL;
-  mesh->boneIds = NULL;
-  mesh->boneWeights = NULL;
-  mesh->vaoId = 0;
-  mesh->vboId = NULL;
-  mesh->vertexCount = 0;
-  mesh->vertices = NULL;
+  mesh.triangleCount = 0;
+  mesh.texcoords = NULL;
+  mesh.texcoords2 = NULL;
+  mesh.normals = NULL;
+  mesh.tangents = NULL;
+  mesh.colors = NULL;
+  mesh.indices = NULL;
+  mesh.animVertices = NULL;
+  mesh.animNormals = NULL;
+  mesh.boneIds = NULL;
+  mesh.boneWeights = NULL;
+  mesh.vaoId = 0;
+  mesh.vboId = NULL;
+  mesh.vertexCount = 0;
+  mesh.vertices = NULL;
 }
 
 void generateBoundingBox3D(

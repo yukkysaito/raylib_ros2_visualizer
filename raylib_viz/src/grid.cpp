@@ -88,8 +88,6 @@ void CartesianGrid::drawGrid()
     p2 = eigen_matrix * p2;
     rlVertex3f((float)p1[0], (float)p1[1], (float)p1[2]);
     rlVertex3f((float)p2[0], (float)p2[1], (float)p2[2]);
-    // rlVertex3f((float)i * spacing, 0.0f, (float)-half_slices * spacing);
-    // rlVertex3f((float)i * spacing, 0.0f, (float)half_slices * spacing);
 
     p1 << (double)-half_slices * spacing, 0.0f, (double)i * spacing, 1.0f;
     p2 << (double)half_slices * spacing, 0.0f, (double)i * spacing, 1.0f;
@@ -97,8 +95,6 @@ void CartesianGrid::drawGrid()
     p2 = eigen_matrix * p2;
     rlVertex3f((float)p1[0], (float)p1[1], (float)p1[2]);
     rlVertex3f((float)p2[0], (float)p2[1], (float)p2[2]);
-    // rlVertex3f((float)-half_slices * spacing, 0.0f, (float)i * spacing);
-    // rlVertex3f((float)half_slices * spacing, 0.0f, (float)i * spacing);
   }
   rlEnd();
 }

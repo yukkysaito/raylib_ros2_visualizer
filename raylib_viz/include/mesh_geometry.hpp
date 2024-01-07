@@ -7,7 +7,7 @@
 #include <memory>
 #include <vector>
 
-void initMesh(const std::unique_ptr<Mesh> & mesh);
+void initMesh(Mesh & mesh);
 
 void generateBoundingBox3D(
   float width, float height, float length, const Eigen::Translation3f & translation,

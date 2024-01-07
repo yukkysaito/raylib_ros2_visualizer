@@ -26,9 +26,9 @@ public:
   : TopicPluginInterface(node, frame_tree, base_frame, topic_name)
   {
     mesh_ = std::make_unique<Mesh>();
-    initMesh(mesh_);
+    initMesh(*mesh_);
     material_ = LoadMaterialDefault();
-    material_.maps[MATERIAL_MAP_DIFFUSE].color = RED;
+    material_.maps[MATERIAL_MAP_DIFFUSE].color = {0, 200, 241, 255};
   }
   ~PointCloudPlugin()
   {
@@ -61,7 +61,7 @@ public:
 
 #if RESET_EVERY_FRAME
       if (uploaded_mesh_) UnloadMesh(*mesh_);
-      initMesh(mesh_);
+      initMesh(*mesh_);
       generatePointCloudMesh(mesh_, message->data);
       UploadMesh(mesh_.get(), true);
 #else

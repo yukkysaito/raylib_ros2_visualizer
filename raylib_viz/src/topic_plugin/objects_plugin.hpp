@@ -21,9 +21,9 @@ public:
   : TopicPluginInterface(node, frame_tree, base_frame, topic_name)
   {
     mesh_ = std::make_unique<Mesh>();
-    initMesh(mesh_);
+    initMesh(*mesh_);
     material_ = LoadMaterialDefault();
-    material_.maps[MATERIAL_MAP_DIFFUSE].color = {0, 131, 241, 100};
+    material_.maps[MATERIAL_MAP_DIFFUSE].color = {0, 131, 241, 255};
   }
 
   ~ObjectsPlugin()
@@ -57,7 +57,7 @@ public:
       auto start = std::chrono::high_resolution_clock::now();
 
       if (uploaded_mesh_) UnloadMesh(*mesh_);
-      initMesh(mesh_);
+      initMesh(*mesh_);
       generateObjectMesh(mesh_, message->data);
       UploadMesh(mesh_.get(), true);
       auto end = std::chrono::high_resolution_clock::now();
