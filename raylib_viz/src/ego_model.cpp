@@ -10,7 +10,7 @@ EgoModel::EgoModel(
 {
   initMesh(mesh_);
   material_ = LoadMaterialDefault();
-  material_.maps[MATERIAL_MAP_DIFFUSE].color = {255, 0, 0, 255};
+  material_.maps[MATERIAL_MAP_DIFFUSE].color = {255, 0, 0, 200};
 
   const float width = 2.0f;
   const float length = 5.0f;

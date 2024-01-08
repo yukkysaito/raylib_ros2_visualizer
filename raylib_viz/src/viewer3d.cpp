@@ -4,6 +4,7 @@
 #include "topic_plugin/topic_plugin.hpp"
 
 #include <iostream>
+
 Viewer3D::Viewer3D(rclcpp::Node * node)
 : node_(node),
   frame_tree_(std::make_shared<FrameTree>(node)),
@@ -12,10 +13,10 @@ Viewer3D::Viewer3D(rclcpp::Node * node)
   ego_model_(std::make_unique<EgoModel>(frame_tree_, camera_player_.getViewerFrame(), base_frame_))
 {
   topic_plugins_.push_back(
-    createPlugin<PointCloudPlugin>("/perception/obstacle_segmentation/pointcloud"));
+    createPlugin<TrajectoryPlugin>("/planning/scenario_planning/trajectory"));
   topic_plugins_.push_back(createPlugin<ObjectsPlugin>("/perception/object_recognition/objects"));
   topic_plugins_.push_back(
-    createPlugin<TrajectoryPlugin>("/planning/scenario_planning/trajectory"));
+    createPlugin<PointCloudPlugin>("/perception/obstacle_segmentation/pointcloud"));
 }
 
 Viewer3D::~Viewer3D()
@@ -39,8 +40,8 @@ void Viewer3D::visualize()
     topic_plugin->visualize3D();
   }
 
-  grid_->drawGrid();
   ego_model_->drawModel();
+  grid_->drawGrid();
 
   EndMode3D();
 

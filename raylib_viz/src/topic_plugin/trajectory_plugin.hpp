@@ -22,7 +22,7 @@ public:
     mesh_ = std::make_unique<Mesh>();
     initMesh(*mesh_);
     material_ = LoadMaterialDefault();
-    material_.maps[MATERIAL_MAP_DIFFUSE].color = {0, 121, 241, 255};
+    material_.maps[MATERIAL_MAP_DIFFUSE].color = {0, 121, 241, 200};
   }
   ~TrajectoryPlugin()
   {

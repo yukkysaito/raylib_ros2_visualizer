@@ -68,8 +68,11 @@ void CartesianGrid::drawGrid()
   const auto & spacing = spacing_;
   int half_slices = slices / 2;
 
+  BeginShaderMode(shader_);
+
   rlBegin(RL_LINES);
   for (int i = -half_slices; i <= half_slices; i++) {
+    // maybe this is not necessary because the shader is already set
     if (i == 0) {
       rlColor3f(0.5f, 0.5f, 0.5f);
       rlColor3f(0.5f, 0.5f, 0.5f);
@@ -97,4 +100,5 @@ void CartesianGrid::drawGrid()
     rlVertex3f((float)p2[0], (float)p2[1], (float)p2[2]);
   }
   rlEnd();
+  EndShaderMode();
 }

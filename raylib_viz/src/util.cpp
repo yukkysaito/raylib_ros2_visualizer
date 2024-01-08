@@ -350,3 +350,21 @@ void generatePolygon3D(
     normals.push_back({normal[0], normal[1], normal[2]});
   }
 }
+
+std::string getMyPackagePath()
+{
+  return getPackagePath("raylib_viz");
+}
+
+std::string getPackagePath(const std::string & package_name)
+{
+  std::string package_path;
+
+  try {
+    package_path = ament_index_cpp::get_package_share_directory(package_name);
+  } catch (ament_index_cpp::PackageNotFoundError & e) {
+    std::cerr << "Package not found: " << package_name << std::endl;
+    return "";
+  }
+  return package_path;
+}
