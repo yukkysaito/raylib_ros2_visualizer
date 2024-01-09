@@ -116,9 +116,8 @@ void CameraPlayer::updateCamera()
     const auto transformed_target_vec = convertFromROS<Vector3>(transformed_ros_target_vec);
     const auto transformed_position_vec = convertFromROS<Vector3>(transformed_ros_position_vec);
 
-    camera.position = Vector3{
-      transformed_position_vec.x + current_movement_.x,
-      transformed_position_vec.y + current_movement_.y, transformed_position_vec.z};
+    camera.position =
+      Vector3{transformed_position_vec.x, transformed_position_vec.y, transformed_position_vec.z};
     camera.target = transformed_target_vec;
 
     UpdateCameraPro(&camera, current_movement_, current_rotation_, current_zoom_);
