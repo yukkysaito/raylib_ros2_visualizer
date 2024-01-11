@@ -8,7 +8,7 @@
 Viewer3D::Viewer3D(rclcpp::Node * node)
 : node_(node),
   frame_tree_(std::make_shared<FrameTree>(node)),
-  camera_player_(frame_tree_, "base_link", base_frame_),
+  camera_player_(frame_tree_, "map", base_frame_),
   grid_(std::make_unique<CartesianGrid>(frame_tree_, camera_player_.getViewerFrame(), base_frame_)),
   ego_model_(std::make_unique<EgoModel>(frame_tree_, camera_player_.getViewerFrame(), base_frame_))
 {

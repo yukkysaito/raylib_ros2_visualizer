@@ -109,17 +109,43 @@ private:
       return;
     }
 
+    std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> points_trans(data->points.size());
+    auto trans = frame_tree_->getTransform(
+        "map", "base_link",
+        std::chrono::system_clock::time_point(std::chrono::nanoseconds(
+            rclcpp::Time(data->header.stamp).nanoseconds())));
+    if (!trans) {
+      std::cout << "aaaaaaaaaaaaa - 0.1 fail" << std::endl;
+    }
+
+    std::transform(
+        data->points.cbegin(), data->points.cend(), points_trans.begin(),
+        [&trans](const autoware_auto_planning_msgs::msg::TrajectoryPoint &p_in)
+            -> autoware_auto_planning_msgs::msg::TrajectoryPoint {
+          Eigen::Vector4d point_in(p_in.pose.position.x, p_in.pose.position.y,
+                                   p_in.pose.position.z, 1.0f);
+          Eigen::Vector4d point_trans = trans.value().inverse() * point_in;
+          auto p_out = p_in;
+          p_out.pose.position.x = point_trans.x();
+          p_out.pose.position.y = point_trans.y();
+          p_out.pose.position.z = point_trans.z();
+          return p_out;
+        });
+
     std::vector<Vector3> vertices, normals;
     Vector3 prev_right_point, prev_left_point;
 
-    // Calculate offsets for the first point
-    calculatePointOffset(data->points.at(0).pose, -(width / 2.0), prev_right_point);
-    calculatePointOffset(data->points.at(0).pose, (width / 2.0), prev_left_point);
+//    auto &data_points = data->points;
+    auto &data_points = points_trans;
 
-    for (size_t i = 1; i < data->points.size(); ++i) {
+    // Calculate offsets for the first point
+    calculatePointOffset(data_points.at(0).pose, -(width / 2.0), prev_right_point);
+    calculatePointOffset(data_points.at(0).pose, (width / 2.0), prev_left_point);
+
+    for (size_t i = 1; i < data_points.size(); ++i) {
       Vector3 traj_right_point, traj_left_point;
-      calculatePointOffset(data->points.at(i).pose, -(width / 2.0), traj_right_point);
-      calculatePointOffset(data->points.at(i).pose, (width / 2.0), traj_left_point);
+      calculatePointOffset(data_points.at(i).pose, -(width / 2.0), traj_right_point);
+      calculatePointOffset(data_points.at(i).pose, (width / 2.0), traj_left_point);
 
       // Add vertices and normals
       vertices.insert(vertices.end(), {prev_left_point, prev_right_point, traj_right_point});
@@ -130,6 +156,7 @@ private:
       prev_left_point = traj_left_point;
       prev_right_point = traj_right_point;
     }
+    std::cout << "aaaaaaaaaaaaa - 3" << std::endl;
 
     // Populate mesh data
     populateMeshData(mesh, vertices, normals);

@@ -89,13 +89,36 @@ private:
     const std::unique_ptr<Mesh> & mesh,
     const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr data)
   {
+
+    auto trans = frame_tree_->getTransform(
+        "map", "base_link",
+        std::chrono::system_clock::time_point(std::chrono::nanoseconds(
+            rclcpp::Time(data->header.stamp).nanoseconds())));
+    if (!trans) {
+      std::cout << "aaaaaaaaaaaaa - 0.1 fail" << std::endl;
+    }
+
+    auto transform_point = [&trans](const geometry_msgs::msg::Point &p_in)
+        -> geometry_msgs::msg::Point {
+      auto p_out = p_in;
+      Eigen::Vector4d point_in(p_in.x, p_in.y, p_in.z, 1.0f);
+      Eigen::Vector4d point_trans = trans.value().inverse() * point_in;
+      p_out.x = point_trans.x();
+      p_out.y = point_trans.y();
+      p_out.z = point_trans.z();
+      return p_out;
+    };
+
     int vertex_count = 0;
     int normal_count = 0;
     std::vector<Vector3> all_vertices, all_normals;
     std::vector<unsigned char> all_indices;
     for (const auto & object : data->objects) {
       const auto & shape = object.shape;
-      const auto & pos = object.kinematics.initial_pose_with_covariance.pose.position;
+      const auto &pos =
+          trans ? transform_point(object.kinematics.initial_pose_with_covariance
+                                      .pose.position)
+                : object.kinematics.initial_pose_with_covariance.pose.position;
       const auto & quat = object.kinematics.initial_pose_with_covariance.pose.orientation;
       Eigen::Translation3f translation =
         convertFromROS<Eigen::Translation3f>(pos.x, pos.y, pos.z).cast<float>();
